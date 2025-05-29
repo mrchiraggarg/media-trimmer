@@ -3,7 +3,11 @@ import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
 // import coreURL from '@ffmpeg/core?url';
 // import wasmURL from '@ffmpeg/core/wasm?url';
 
-const ffmpeg = createFFmpeg({ log: true });
+const ffmpeg = createFFmpeg({
+  log: true,
+  corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js', // important!
+});
+// corePath: 'https://unpkg.com/@ffmpeg/core@0.12.2/dist/ffmpeg-core.js', // important!
 
 export default function MediaTrimmer() {
   const [ready, setReady] = useState(false);
