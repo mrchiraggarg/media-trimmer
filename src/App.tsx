@@ -1,12 +1,11 @@
 import React from 'react';
-// import logo from './logo.svg';
-import './App.css';
+import MediaTrimmer from './components/MediaTrimmer';
 
 function App() {
   return (
-    <p className="text-3xl font-bold underline">
-      Hello world!
-    </p>
+    <div className="min-h-screen flex justify-center items-center bg-[#e0e5ec]">
+      <MediaTrimmer />
+    </div>
   );
 }
 
