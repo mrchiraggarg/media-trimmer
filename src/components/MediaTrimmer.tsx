@@ -1,30 +1,27 @@
-// MediaTrimmer.tsx
-import React, { useEffect, useState } from 'react';
-import FFmpeg from '@ffmpeg/ffmpeg';
-
-const createFFmpeg = FFmpeg.createFFmpeg;
-const fetchFile = FFmpeg.fetchFile;
-
-const ffmpeg = createFFmpeg({ log: true });
+import React, { useState, useEffect } from 'react';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
 
 export default function MediaTrimmer() {
   const [ready, setReady] = useState(false);
-  const [video, setVideo] = useState<any>(null);
-
-  const load = async () => {
-    await ffmpeg.load();
-    setReady(true);
-  };
+  const [ffmpeg] = useState(() => new FFmpeg({ log: true }));
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
-    load();
-  }, []);
+    ffmpeg.load().then(() => setReady(true));
+  }, [ffmpeg]);
 
   const handleTrim = async () => {
-    ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(video));
+    if (!file) return;
+
+    const data = await FFmpeg.fetchFile(file);
+    ffmpeg.FS('writeFile', 'input.mp4', data);
+
     await ffmpeg.run('-i', 'input.mp4', '-ss', '00:00:05', '-t', '00:00:10', '-c', 'copy', 'output.mp4');
-    const data = ffmpeg.FS('readFile', 'output.mp4');
-    const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+
+    const trimmedData = ffmpeg.FS('readFile', 'output.mp4');
+
+    const url = URL.createObjectURL(new Blob([trimmedData.buffer], { type: 'video/mp4' }));
+
     const a = document.createElement('a');
     a.href = url;
     a.download = 'trimmed.mp4';
@@ -33,9 +30,13 @@ export default function MediaTrimmer() {
 
   return (
     <div>
-      <h1>React Media Trimmer</h1>
-      <input type="file" onChange={(e) => setVideo(e.target.files?.[0])} />
-      <button onClick={handleTrim} disabled={!ready || !video}>
+      <h1>Media Trimmer</h1>
+      <input
+        type="file"
+        accept="video/*"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+      />
+      <button disabled={!ready || !file} onClick={handleTrim}>
         Trim Video
       </button>
     </div>
