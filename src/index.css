@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  font-family: 'Fira Code', 'Space Mono', 'Courier New',
+    monospace;
+  font-weight: bold;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
 body {
   @apply bg-[#e0e5ec] min-h-screen flex items-center justify-center;
 }
