@@ -10,6 +10,8 @@ export default function MediaTrimmer() {
   const [ready, setReady] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isTrimming, setIsTrimming] = useState(false);
+  const [fromTime, setFromTime] = useState('00:00:00');
+  const [toTime, setToTime] = useState('00:00:10');
 
   useEffect(() => {
     ffmpeg.load().then(() => setReady(true));
@@ -28,7 +30,16 @@ export default function MediaTrimmer() {
     const data = await fetchFile(file);
     ffmpeg.FS('writeFile', 'input.mp4', data);
 
-    await ffmpeg.run('-i', 'input.mp4', '-ss', '00:00:05', '-t', '00:00:10', '-c', 'copy', 'output.mp4');
+    const duration = toTime.split(':').reduce((acc, time) => (60 * acc) + parseInt(time), 0) -
+                    fromTime.split(':').reduce((acc, time) => (60 * acc) + parseInt(time), 0);
+
+    await ffmpeg.run(
+      '-i', 'input.mp4',
+      '-ss', fromTime,
+      '-t', String(duration),
+      '-c', 'copy',
+      'output.mp4'
+    );
 
     const trimmedData = ffmpeg.FS('readFile', 'output.mp4');
     const url = URL.createObjectURL(new Blob([trimmedData.buffer], { type: 'video/mp4' }));
@@ -44,21 +55,49 @@ export default function MediaTrimmer() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.heading}>🎬 Claymorphic Media Trimmer</h1>
+        <h1 style={styles.heading}>🎬 Media Trimmer</h1>
 
-        <input
-          type="file"
-          accept="video/*"
-          style={styles.input}
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
+        <div style={styles.fileInputContainer}>
+          <label style={styles.fileInputLabel}>
+            Choose File
+            <input
+              type="file"
+              accept="video/*"
+              style={styles.fileInput}
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+        </div>
+
+        <div style={styles.timeInputs}>
+          <div style={styles.timeInputContainer}>
+            <label style={styles.label}>From:</label>
+            <input
+              type="time"
+              step="1"
+              value={fromTime}
+              onChange={(e) => setFromTime(e.target.value)}
+              style={styles.timeInput}
+            />
+          </div>
+          <div style={styles.timeInputContainer}>
+            <label style={styles.label}>To:</label>
+            <input
+              type="time"
+              step="1"
+              value={toTime}
+              onChange={(e) => setToTime(e.target.value)}
+              style={styles.timeInput}
+            />
+          </div>
+        </div>
 
         <button
           style={ready && file ? styles.button : styles.disabledButton}
           disabled={!ready || !file || isTrimming}
           onClick={handleTrim}
         >
-          {isTrimming ? 'Trimming...' : 'Trim Video'}
+          {isTrimming ? 'Trimming...' : 'Trim Now'}
         </button>
 
         {file && (
@@ -69,7 +108,6 @@ export default function MediaTrimmer() {
   );
 }
 
-// 💅 Claymorphism-inspired styles
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
@@ -100,15 +138,57 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     textAlign: 'center',
   },
-  input: {
+  fileInputContainer: {
+    width: '100%',
+    marginBottom: '20px',
+  },
+  fileInputLabel: {
+    display: 'block',
+    padding: '12px 24px',
+    background: '#E0E5EC',
+    borderRadius: '15px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    color: '#333',
+    fontWeight: 600,
+    boxShadow: `
+      8px 8px 16px #bebebe,
+      -8px -8px 16px #ffffff
+    `,
+    transition: 'all 0.3s ease',
+  },
+  fileInput: {
+    display: 'none',
+  },
+  timeInputs: {
+    display: 'flex',
+    gap: '20px',
+    marginBottom: '20px',
+    width: '100%',
+  },
+  timeInputContainer: {
+    flex: 1,
+  },
+  timeInput: {
     padding: '12px',
     borderRadius: '15px',
     border: 'none',
-    background: '#f0f0f0',
-    boxShadow: 'inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #ffffff',
+    background: '#E0E5EC',
+    boxShadow: `
+      inset 5px 5px 10px #bebebe,
+      inset -5px -5px 10px #ffffff
+    `,
     width: '100%',
-    marginBottom: '20px',
-    cursor: 'pointer',
+    color: '#333',
+    fontSize: '14px',
+    outline: 'none',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '8px',
+    color: '#444',
+    fontSize: '14px',
+    fontWeight: 600,
   },
   button: {
     background: '#E0E5EC',
@@ -144,4 +224,4 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     color: '#444',
   },
-};
+}
